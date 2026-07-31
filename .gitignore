@@ -1,0 +1,55 @@
+## .NET build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Test and coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+*.opencover.xml
+
+## OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Local databases and secrets
+*.mdf
+*.ldf
+*.db
+*.db-shm
+*.db-wal
+secrets.json
+.env
+.env.*
+!.env.example
+
+## Publish output
+publish/
+.dist/
+*.nupkg
+*.snupkg
+
+## Temporary files
+*.tmp
+*.temp
+*.log
+run-smoke-*.out.log
+run-smoke-*.err.log

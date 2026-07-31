@@ -1,0 +1,44 @@
+@host = https://localhost:7117
+@token = COLLER_LE_JWT_ICI
+
+### Inscription d'un utilisateur normal
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Khalil User",
+  "email": "user@example.com",
+  "password": "User123!"
+}
+
+### Connexion utilisateur
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "User123!"
+}
+
+### Profil courant
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Tous les produits : tout utilisateur authentifié
+GET {{host}}/api/products
+Authorization: Bearer {{token}}
+
+### Créer un produit : Admin uniquement
+POST {{host}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Clavier mécanique",
+  "price": 99.90,
+  "stock": 12
+}
+
+### Utilisateurs : Admin uniquement
+GET {{host}}/api/admin/users
+Authorization: Bearer {{token}}
