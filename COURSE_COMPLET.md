@@ -16,6 +16,41 @@
 
 Le domaine choisi est volontairement simple : des utilisateurs et des produits. Tout utilisateur authentifié peut lire les produits, mais seul un administrateur peut les créer, modifier ou supprimer.
 
+### 1.1 Roadmap du projet
+
+Cette roadmap décrit le chemin complet du projet, depuis la création de l'API jusqu'à une base solide pour une évolution production.
+
+| Phase | Objectif | Livrables |
+|---|---|---|
+| 1. Initialisation | Créer une API ASP.NET Core 9 propre et versionnée | Projet `webapi`, `.gitignore`, premier commit, structure de dossiers |
+| 2. Dépendances | Installer les bibliothèques nécessaires à la sécurité, EF Core, SQL Server et Swagger | Packages NuGet, outil `dotnet-ef`, restauration validée |
+| 3. Configuration | Séparer la configuration applicative des secrets | `appsettings.json`, User Secrets, chaîne SQL Server, clé JWT |
+| 4. Modèle de données | Définir les entités persistées | `AppUser`, `Product`, index unique sur l'e-mail, précision du prix |
+| 5. Persistance | Brancher EF Core sur SQL Server | `ApplicationDbContext`, migration initiale, base créée |
+| 6. Authentification | Inscrire et connecter les utilisateurs | DTOs Auth, hachage du mot de passe, endpoints register/login |
+| 7. JWT | Générer et valider les access tokens | `JwtOptions`, `JwtTokenService`, validation issuer/audience/signature/expiration |
+| 8. Autorisation | Protéger les routes selon l'identité et le rôle | `[Authorize]`, rôle `Admin`, politique `AdminOnly` |
+| 9. Domaine produits | Exposer les opérations CRUD sécurisées | Lecture pour utilisateur authentifié, mutations réservées Admin |
+| 10. Documentation et tests manuels | Tester le flux complet depuis Swagger et le fichier HTTP | Swagger Bearer, scénarios 401/403/200/201 |
+| 11. Qualité et GitHub | Préparer le projet pour le partage et l'intégration continue | commits propres, dépôt GitHub, GitHub Actions `dotnet restore/build` |
+| 12. Durcissement futur | Identifier ce qui manque pour une production réelle | refresh tokens, rate limiting, audit, MFA, tests d'intégration, observabilité |
+
+Ordre conseillé de réalisation :
+
+```text
+Créer le projet
+  -> installer les dépendances
+  -> configurer SQL Server et les secrets
+  -> créer les modèles et le DbContext
+  -> générer la migration
+  -> implémenter register/login
+  -> générer et valider le JWT
+  -> protéger les endpoints
+  -> tester avec Swagger
+  -> versionner et pousser sur GitHub
+  -> ajouter progressivement les améliorations de production
+```
+
 ---
 
 ## 2. Correction du vocabulaire
@@ -291,12 +326,34 @@ Supprimez les fichiers WeatherForecast générés par le modèle s'ils existent.
 
 ### 10.1 Installer les packages
 
+Depuis le dossier qui contient `JwtSecurityApi.csproj`, vérifiez d'abord que le SDK .NET 9 est disponible :
+
+```powershell
+dotnet --list-sdks
+dotnet --version
+```
+
+Si plusieurs SDK sont installés, le projet cible explicitement .NET 9 avec :
+
+```xml
+<TargetFramework>net9.0</TargetFramework>
+```
+
+Installez les dépendances NuGet du projet :
+
 ```powershell
 dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 9.0.18
 dotnet add package Microsoft.EntityFrameworkCore.SqlServer --version 9.0.18
 dotnet add package Microsoft.EntityFrameworkCore.Design --version 9.0.18
 dotnet add package Swashbuckle.AspNetCore --version 9.0.6
 ```
+
+Rôle de chaque dépendance :
+
+- `Microsoft.AspNetCore.Authentication.JwtBearer` : validation des tokens JWT reçus dans `Authorization: Bearer ...` ;
+- `Microsoft.EntityFrameworkCore.SqlServer` : provider EF Core pour SQL Server ;
+- `Microsoft.EntityFrameworkCore.Design` : génération des migrations EF Core ;
+- `Swashbuckle.AspNetCore` : Swagger UI et documentation OpenAPI.
 
 Installer l'outil EF Core :
 
@@ -314,6 +371,9 @@ Vérifier :
 
 ```powershell
 dotnet ef --version
+dotnet restore
+dotnet list package
+dotnet build
 ```
 
 ---
