@@ -1,5 +1,6 @@
 using System.Text;
 using System.Reflection;
+using System.Threading.RateLimiting;
 using JwtSecurityApi.Constants;
 using JwtSecurityApi.Data;
 using JwtSecurityApi.Models;
@@ -15,6 +16,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddProblemDetails();
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? [];
+
+if (allowedOrigins.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("Frontend", policy =>
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod());
+    });
+}
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -97,6 +115,21 @@ builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<DbSeeder>();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -167,8 +200,20 @@ if (app.Environment.IsDevelopment())
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
     await seeder.SeedAsync();
 }
+else
+{
+    app.UseExceptionHandler();
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
+
+if (allowedOrigins.Length > 0)
+{
+    app.UseCors("Frontend");
+}
+
+app.UseRateLimiter();
 
 // L'ordre est important : authentifier d'abord, autoriser ensuite.
 app.UseAuthentication();

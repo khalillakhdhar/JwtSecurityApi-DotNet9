@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace JwtSecurityApi.Controllers;
 
@@ -21,6 +22,7 @@ public sealed class AuthController(
 {
     /// <summary>Creer un compte utilisateur standard et retourner un token JWT.</summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("register")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,6 +69,7 @@ public sealed class AuthController(
 
     /// <summary>Authentifier un utilisateur et retourner un token JWT Bearer.</summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
